@@ -1,6 +1,12 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
+
+def element_presence(how, what, time):
+    element_present = EC.presence_of_element_located((how, what))
+    WebDriverWait(driver, time).until(element_present)
 
 data = open('words', 'r').read().split('\n')
 
@@ -19,17 +25,18 @@ absents = set()
 
 N = 6
 
-driver = webdriver.Chrome()
+options = webdriver.ChromeOptions()
+options.add_argument("--start-maximized")
+
+driver = webdriver.Chrome(options=options)
 
 driver.get('https://wordle.danielfrg.com/')
 
 try:
-    driver.find_element(By.XPATH, '//*[@id="headlessui-dialog-3"]/div/div[2]/div[6]/button').click()
-except:
-    pass
-
-try:
-    driver.find_element(By.XPATH, '//*[@id="chakra-modal-1"]/button').click()
+    element_presence(By.XPATH, "/html/body/div[3]/div[2]/div[1]/div[2]/div[2]/button[1]", 40)
+    driver.find_element(By.XPATH, "/html/body/div[3]/div[2]/div[1]/div[2]/div[2]/button[1]").click()
+    element_presence(By.XPATH, "/html/body/div[2]/div[3]/div/div/div[2]/div[1]/button", 40)
+    driver.find_element(By.XPATH, "/html/body/div[2]/div[3]/div/div/div[2]/div[1]/button").click()
 except:
     pass
 
@@ -38,22 +45,25 @@ body = driver.find_element(By.XPATH, '/html/body')
 def loadInfo(i):
     global absents
 
-    cards = driver.find_elements(By.CLASS_NAME, 'css-ceoe56')[i].find_elements(By.CLASS_NAME, 'react-card-back')
+    cards = driver.find_elements(By.CLASS_NAME, 'mui-style-e8rekw')[i].find_elements(By.CLASS_NAME, 'react-card-back')
 
-    keyboard_rows = driver.find_elements(By.CLASS_NAME, 'css-nwfosv')
+    keyboard_rows = driver.find_elements(By.CLASS_NAME, 'mui-style-vzy0h5')
+
+    keyboard_rows.append(driver.find_element(By.CLASS_NAME, 'mui-style-1j52cd2'))
+
     
     for j in range(len(cards)):
-        card_correct = cards[j].find_elements(By.CLASS_NAME, 'css-1jtxyvl')
+        card_correct = cards[j].find_elements(By.CLASS_NAME, 'mui-style-bn1qqj')
         if card_correct:
             corrects[j] = card_correct[0].text.lower()
         
-        card_present = cards[j].find_elements(By.CLASS_NAME, 'css-140kyip')
+        card_present = cards[j].find_elements(By.CLASS_NAME, 'mui-style-1s62ug5')
         if card_present:
             presents[str(j)].add(card_present[0].text.lower())
             presents_set.add(card_present[0].text.lower())
 
     for key_row in keyboard_rows:
-        key_absents = key_row.find_elements(By.CLASS_NAME, 'css-5p6x7')
+        key_absents = key_row.find_elements(By.CLASS_NAME, 'mui-style-1596855')
         absents = absents.union(set([x.text.lower() for x in key_absents]))
 
     return absents
